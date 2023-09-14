@@ -7,6 +7,7 @@ This example includes wolfSSL test, benchmark, Wifi, TCP/TLS client.
 
 ```
 $ git clone https://github.com/raspberrypi/pico-sdk
+$ git clone https://github.com/raspberrypi/pico-examples
 $ git clone https://github.com/wolfssl/wolfssl
 $ git clone https://github.com/wolfssl/wolfssl-examples
 ```
@@ -15,6 +16,7 @@ $ git clone https://github.com/wolfssl/wolfssl-examples
 
 ```
 $ export PICO_SDK_PATH=/your/pico-sdk/path
+$ export PICO_EXAMPLES_PATH=/your/pico-examples/path
 $ export WOLFSSL_ROOT=/your/wolfssl-root/path
 ```
 

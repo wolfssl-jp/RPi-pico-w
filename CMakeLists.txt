@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 
 # Pull in Pico and FreeRTOS
-include(pico_sdk_import.cmake)
-include(pico_extras_import_optional.cmake)
+include($ENV{PICO_EXAMPLES_PATH}/pico_sdk_import.cmake)
+include($ENV{PICO_EXAMPLES_PATH}/pico_extras_import_optional.cmake)
+
 #include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
 
 
@@ -17,7 +18,6 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the SDK
 pico_sdk_init()
 
-
 ### Global Include Path
     include_directories(config)
     include_directories(include)
@@ -28,36 +28,10 @@ pico_sdk_init()
 
     set(WOLFSSL_ROOT $ENV{WOLFSSL_ROOT})
     include_directories(${WOLFSSL_ROOT})
-### End of Global Include Path
 
+# ## End of Global Include Path
 
-### wolfSSL/wolfCrypt library
-    file(GLOB_RECURSE WOLFSSL_SRC
-        "${WOLFSSL_ROOT}/src/*.c"
-        "${WOLFSSL_ROOT}/wolfcrypt/src/*.c"
-    )
-    list(REMOVE_ITEM WOLFSSL_SRC EXCLUDE REGEX
-        "${WOLFSSL_ROOT}/src/bio.c"
-        "${WOLFSSL_ROOT}/src/conf.c"
-        "${WOLFSSL_ROOT}/src/pk.c"
-        "${WOLFSSL_ROOT}/src/ssl_asn1.c"
-        "${WOLFSSL_ROOT}/src/ssl_bn.c"
-        "${WOLFSSL_ROOT}/src/ssl_misc.c"
-        "${WOLFSSL_ROOT}/src/x509.c"
-        "${WOLFSSL_ROOT}/src/x509_str.c"
-        "${WOLFSSL_ROOT}/wolfcrypt/src/evp.c"
-        "${WOLFSSL_ROOT}/wolfcrypt/src/misc.c"
-    )
-
-    add_library(wolfssl STATIC
-        ${WOLFSSL_SRC}
-    )
-
-    target_compile_definitions(wolfssl PUBLIC
-        WOLFSSL_USER_SETTINGS
-    )
-### End of wolfSSL/wolfCrypt library
-
+include(wolfssl_import.cmake)
 
 ### Test wolfCrypt algorithms
     add_executable(testwolfcrypt
