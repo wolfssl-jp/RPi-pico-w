@@ -6,10 +6,10 @@ This example includes wolfSSL test, benchmark, Wifi, TCP/TLS client.
 ### 1. Download files
 
 ```
+# git clone https://github.com/wolfssl-jp/RPi-pico-w
 $ git clone https://github.com/raspberrypi/pico-sdk
 $ git clone https://github.com/raspberrypi/pico-examples
 $ git clone https://github.com/wolfssl/wolfssl
-$ git clone https://github.com/wolfssl/wolfssl-examples
 ```
 
 ### 2. Define path
