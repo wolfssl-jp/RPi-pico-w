@@ -35,6 +35,7 @@ extern "C"
 #include <stdio.h>
 #define TARGET_EMBEDDED
 
+#include <time.h>
 extern time_t myTime(time_t *);
 #define XTIME(t) myTime(t)
 

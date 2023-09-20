@@ -1,0 +1,3 @@
+/Users/rocksonqwerty/dev-intern/RPi-pico-w/build/pioasm/CMakeFiles/pioasm.dir
+/Users/rocksonqwerty/dev-intern/RPi-pico-w/build/pioasm/CMakeFiles/edit_cache.dir
+/Users/rocksonqwerty/dev-intern/RPi-pico-w/build/pioasm/CMakeFiles/rebuild_cache.dir
