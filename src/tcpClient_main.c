@@ -84,6 +84,8 @@ exit:
 void main(void)
 {
     blink(20, 1);
+    printf("\nHit any key to start\n");
+    getchar();
 
     cyw43_arch_enable_sta_mode();
     printf("Connecting to Wi-Fi...\n");
@@ -105,10 +107,3 @@ void main(void)
 
     printf("Wifi disconnected\n");
 }
-
-void lwip_example_app_platform_assert(const char *msg, int line, const char *file)
-{
-    printf("Assertion \"%s\" failed at line %d in %s\n", msg, line, file);
-    fflush(NULL);
-}
-

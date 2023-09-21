@@ -36,7 +36,9 @@ int main(int argc, char **argv)
     int ret;
 
     blink(10, WOLF_BLINK_INIT);
-
+    printf("\nHit any key to start\n");
+    getchar();
+    
     wolfSSL_Init();
     wolfSSL_Debugging_ON();
 
