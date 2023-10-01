@@ -538,12 +538,24 @@ extern int my_rng_gen_block(unsigned char *output, unsigned int sz);
 #define NO_MD4
 #define NO_PWDBASED
     // #define NO_CODING
-    // #define NO_ASN_TIME
+    #define NO_ASN_TIME
     // #define NO_CERTS
     // #define NO_SIG_WRAPPER
 
 #ifdef __cplusplus
 }
+#endif
+
+// wolfMQTT 
+#define WOLFMQTT_USER_IO
+#define WOLFSSL_LWIP
+// #define LWIP_PLATFORM_ASSERT 
+// #define LWIP_RAND
+
+// #define DEBUG_WOLFSSL
+#ifndef ENABLE_MQTT_TLS
+#define ENABLE_MQTT_TLS
+// #define WOLFMQTT_V5
 #endif
 
 #endif /* WOLFSSL_USER_SETTINGS_H */

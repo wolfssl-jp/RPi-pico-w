@@ -20,6 +20,8 @@
  */
 
 #include <stdio.h>
+#define PICO_CYW43_ARCH_POLL 1
+
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 
@@ -78,6 +80,7 @@ void tlsClient_test(void)
     wolfSSL_Init();
     wolfSSL_Debugging_ON();
 
+
     if ((ctx = wolfSSL_CTX_new((wolfTLSv1_2_client_method()))) == NULL) {
         printf("ERROR:wolfSSL_CTX_new()\n");
         return;
@@ -95,7 +98,7 @@ void tlsClient_test(void)
     sock = socket();
     if (!sock)
     {
-        printf("ERROR:wolf_TCPsocke()\n");
+        printf("ERROR:wolf_TCPsocket()\n");
         return;
     }
 

@@ -26,6 +26,8 @@
 #include <wolfcrypt/benchmark/benchmark.h>
 
 #include <stdio.h>
+#define PICO_CYW43_ARCH_POLL 1
+
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "wolf/blink.h"
@@ -38,6 +40,7 @@ int main(int argc, char **argv)
     int ret;
 
     blink(10, WOLF_BLINK_INIT);
+    printf("Hello world!\n");
     printf("\nSystem clock = %dMHz\n\n", clock_get_hz(clk_sys)/1000000);
     ret = benchmark_test(NULL);
     printf("End: %d\n", ret);

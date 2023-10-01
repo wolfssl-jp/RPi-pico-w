@@ -26,6 +26,7 @@
 #include <wolfcrypt/test/test.h>
 
 #include <stdio.h>
+#define PICO_CYW43_ARCH_POLL 1
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "wolf/blink.h"
