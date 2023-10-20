@@ -1,0 +1,17 @@
+.build/*
+pico_extras_import_optional.cmake
+pico_sdk_import.cmake
+
+# macOS
+.DS_Store
+._*
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.vsix
