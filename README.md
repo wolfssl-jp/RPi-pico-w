@@ -15,6 +15,7 @@ $ git clone https://github.com/wolfssl/wolfssl
 ### 2. Define path
 
 ```
+$ export PICO_WOLF_PATH=/your/RPi-pico-w/path
 $ export PICO_SDK_PATH=/your/pico-sdk/path
 $ export PICO_EXAMPLES_PATH=/your/pico-examples/path
 $ export WOLFSSL_ROOT=/your/wolfssl-root/path
@@ -23,10 +24,14 @@ $ export WOLFSSL_ROOT=/your/wolfssl-root/path
 ### 3. cmake and make
 
 ```
-$ cd wolfssl-examples/RPi-Pico
+$ cd $PICO_SDK_PATH
+$ git submodule update --init
+$ cd $PICO_WOLF_PATH
+$ ln -s $PICO_EXAMPLES_PATH/pico_extras_import_optional.cmake pico_extras_import_optional.cmake
+$ ln -s $PICO_EXAMPLES_PATH/pico_sdk_import.cmake pico_sdk_import.cmake
 $ mkdir build
 $ cd build
-$ cmake -DPICO_BOARD=pico_w -DWIFI_SSID="wifi-ssid" -DWIFI_PASSWORD="wifi-password"
+$ cmake -DPICO_BOARD=pico_w -DWIFI_SSID="wifi-ssid" -DWIFI_PASSWORD="wifi-password" \
 -DTEST_TCP_SERVER_IP="ip-addr" ..
 $ make
 ```
