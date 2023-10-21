@@ -205,9 +205,47 @@ include(wolfmqtt_import.cmake)
         wolfmqtt
     )
     
+    
     pico_enable_stdio_usb(mqtt_Client 1)
     pico_enable_stdio_uart(mqtt_Client 0)
 
     pico_add_extra_outputs(mqtt_Client)
 
 ### End of MQTT Client
+
+### MQTT Subscribe_picoLED
+add_executable(mqttSubscribe_picoLED
+src/mqttSubscribe_picoLED.c
+src/blink.c
+src/wifi.c
+src/tcp.c
+src/mqtt.c
+src/tiny-json.c
+)
+target_compile_definitions(mqttSubscribe_picoLED PRIVATE
+WIFI_SSID=\"${WIFI_SSID}\"
+WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
+PICO_CYW43_ARCH_POLL=1
+NO_SYS=1
+ENABLE_MQTT_TLS=1
+
+)
+target_link_libraries(mqttSubscribe_picoLED
+pico_stdlib
+pico_rand
+pico_lwip
+pico_cyw43_arch
+pico_lwip_nosys
+pico_async_context_poll
+wolfssl
+wolfmqtt
+)
+
+
+pico_enable_stdio_usb(mqttSubscribe_picoLED 1)
+pico_enable_stdio_uart(mqttSubscribe_picoLED 0)
+
+pico_add_extra_outputs(mqttSubscribe_picoLED)
+
+### End of MQTT pico LED Client

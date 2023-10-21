@@ -425,7 +425,7 @@ static int NetConnect(void *context, const char* host, word16 port,
     memset(&sock->addr, 0, sizeof(sock->addr));
     sock->addr.sin_family = AF_INET;           /* using IPv4      */
     sock->addr.sin_port = htons(MQTT_BROKER_PORT); /* on DEFAULT_PORT */
-    printf("NetConnect: Host %s, Port %u, Timeout %d ms, Use TLS %d",
+    printf("NetConnect: Host %s, Port %u, Timeout %d ms, Use TLS %d\n",
             host, port, timeout_ms, sock->mqttCtx->use_tls);
 
     if (inet_pton(AF_INET, TEST_MOSQUITTO_ORG_IP, &(sock->addr).sin_addr) != 1) {
