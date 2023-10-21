@@ -1,4 +1,4 @@
-.build/*
+build/*
 pico_extras_import_optional.cmake
 pico_sdk_import.cmake
 
