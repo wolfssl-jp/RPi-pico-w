@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #include <stdio.h>
-#define PICO_CYW43_ARCH_POLL 1
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 
@@ -39,7 +38,6 @@
 
 
 
-// #include "wolf/userio_templete.h"
 #include "wolfmqtt/mqtt_types.h"
 #include "wolfmqtt/mqtt_client.h"
 #include "examples/mqttport.h"
@@ -592,8 +590,6 @@ int set_mqtt_ctx(MQTTCtx* mqttCtx){
 void main(void)
 {
     blink(20, 1);
-
-    printf("size of sockaddr_in : %ld \n", sizeof(struct sockaddr_in));
 
     cyw43_arch_enable_sta_mode();
     printf("Connecting to Wi-Fi...\n");

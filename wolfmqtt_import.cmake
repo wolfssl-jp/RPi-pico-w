@@ -8,9 +8,6 @@ file(GLOB_RECURSE WOLFMQTT_SRC
     "${WOLFMQTT_ROOT}/src/mqtt_client.c"
     "${WOLFMQTT_ROOT}/src/mqtt_packet.c"
     "${WOLFMQTT_ROOT}/src/mqtt_socket.c"
-    # "${WOLFMQTT_ROOT}/examples/mqttexample.c"
-    # "${WOLFSSL_ROOT}/src/wolfio.c"
-
     )
 
 add_library(wolfmqtt STATIC

@@ -18,7 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
-#define PICO_CYW43_ARCH_POLL 1
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 

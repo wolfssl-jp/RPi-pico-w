@@ -1,6 +1,5 @@
 
 #include <stdio.h>
-#define PICO_CYW43_ARCH_POLL 1
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 
@@ -19,7 +18,6 @@
 #include <wolfssl/certs_test.h>
 
 
-// #include "wolf/userio_templete.h"
 #include "wolfmqtt/mqtt_client.h"
 #include "examples/mqttport.h"
 #include "examples/mqttnet.h"
@@ -504,7 +502,6 @@ int MqttClientNet_Init(MqttNet* net, MQTTCtx* mqttCtx)
         sockCtx->stat = SOCK_BEGIN;
         sockCtx->mqttCtx = mqttCtx;
 
-        // mqttCtx->client.net = net;
         
     }
     return MQTT_CODE_SUCCESS;

@@ -1,4 +1,4 @@
-/* mqttClient_main.c
+/* mqttSubscribe_picoLED.c
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 #include <stdio.h>
-#define PICO_CYW43_ARCH_POLL 1
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 
@@ -39,7 +38,6 @@
 
 
 
-// #include "wolf/userio_templete.h"
 #include "wolfmqtt/mqtt_types.h"
 #include "wolfmqtt/mqtt_client.h"
 #include "examples/mqttport.h"
@@ -289,52 +287,6 @@ int mqttSubscribe_picoLED(MQTTCtx *mqttCtx)
             topic->qos, topic->return_code);
     }
 
-    // /* Publish Topic */
-    // XMEMSET(&mqttCtx->publish, 0, sizeof(MqttPublish));
-    // mqttCtx->publish.retain = 0;
-    // mqttCtx->publish.qos = mqttCtx->qos;
-    // mqttCtx->publish.duplicate = 0;
-    // mqttCtx->publish.topic_name = mqttCtx->topic_name;
-    // mqttCtx->publish.packet_id = mqtt_get_packetid();
-
-    // if (mqttCtx->pub_file) {
-    //     /* If a file is specified, then read into the allocated buffer */
-    //     rc = mqtt_file_load(mqttCtx->pub_file, &mqttCtx->publish.buffer,
-    //             (int*)&mqttCtx->publish.total_len);
-    //     if (rc != MQTT_CODE_SUCCESS) {
-    //         /* There was an error loading the file */
-    //         PRINTF("MQTT Publish file error: %d", rc);
-    //     }
-    // }
-    // else {
-    //     mqttCtx->publish.buffer = (byte*)mqttCtx->message;
-    //     mqttCtx->publish.total_len = (word16)XSTRLEN(mqttCtx->message);
-    // }
-
-    // if (rc == MQTT_CODE_SUCCESS) {
-
-
-    //     /* This loop allows payloads larger than the buffer to be sent by
-    //        repeatedly calling publish.
-    //     */
-    //     do {
-    //         rc = MqttClient_Publish(&mqttCtx->client, &mqttCtx->publish);
-    //     } while(rc == MQTT_CODE_PUB_CONTINUE);
-
-    //     if ((mqttCtx->pub_file) && (mqttCtx->publish.buffer)) {
-    //         WOLFMQTT_FREE(mqttCtx->publish.buffer);
-    //     }
-
-    //     PRINTF("MQTT Publish: Topic %s, %s (%d)",
-    //         mqttCtx->publish.topic_name,
-    //         MqttClient_ReturnCodeToString(rc), rc);
-
-    //     if (rc != MQTT_CODE_SUCCESS) {
-    //         goto disconn;
-    //     }
-
-    // }
-
     /* Read Loop */
     PRINTF("MQTT Waiting for message...");
 
@@ -408,23 +360,6 @@ int mqttSubscribe_picoLED(MQTTCtx *mqttCtx)
         goto disconn;
     }
 
-//     /* Unsubscribe Topics */
-//     XMEMSET(&mqttCtx->unsubscribe, 0, sizeof(MqttUnsubscribe));
-//     mqttCtx->unsubscribe.packet_id = mqtt_get_packetid();
-//     mqttCtx->unsubscribe.topic_count =
-//         sizeof(mqttCtx->topics) / sizeof(MqttTopic);
-//     mqttCtx->unsubscribe.topics = mqttCtx->topics;
-
-//     /* Unsubscribe Topics */
-//     rc = MqttClient_Unsubscribe(&mqttCtx->client,
-//            &mqttCtx->unsubscribe);
-
-//     PRINTF("MQTT Unsubscribe: %s (%d)",
-//         MqttClient_ReturnCodeToString(rc), rc);
-//     if (rc != MQTT_CODE_SUCCESS) {
-//         goto disconn;
-//     }
-//     mqttCtx->return_code = rc;
 
 disconn:
     /* Disconnect */
@@ -486,8 +421,6 @@ int set_mqtt_ctx(MQTTCtx* mqttCtx){
 void main(void)
 {
     blink(20, 1);
-
-    printf("size of sockaddr_in : %ld \n", sizeof(struct sockaddr_in));
 
     cyw43_arch_enable_sta_mode();
     printf("Connecting to Wi-Fi...\n");

@@ -191,7 +191,7 @@ include(wolfmqtt_import.cmake)
         TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
         PICO_CYW43_ARCH_POLL=1
         NO_SYS=1
-        ENABLE_MQTT_TLS=1
+        # ENABLE_MQTT_TLS=1
 
     )
     target_link_libraries(mqtt_Client
@@ -228,7 +228,7 @@ WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
 TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
 PICO_CYW43_ARCH_POLL=1
 NO_SYS=1
-ENABLE_MQTT_TLS=1
+# ENABLE_MQTT_TLS=1
 
 )
 target_link_libraries(mqttSubscribe_picoLED

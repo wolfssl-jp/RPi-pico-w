@@ -20,7 +20,6 @@
  */
 
 #include <stdio.h>
-#define PICO_CYW43_ARCH_POLL 1
 
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
