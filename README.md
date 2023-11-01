@@ -1,6 +1,6 @@
 ## Getting Started
 
-This example includes wolfSSL test, benchmark, Wifi, TCP/TLS client.
+This example includes wolfSSL test, benchmark, Wifi, TCP/TLS client and wolfMQTT client.
 
 
 ### 1. Download files
@@ -10,6 +10,7 @@ This example includes wolfSSL test, benchmark, Wifi, TCP/TLS client.
 $ git clone https://github.com/raspberrypi/pico-sdk
 $ git clone https://github.com/raspberrypi/pico-examples
 $ git clone https://github.com/wolfssl/wolfssl
+$ git clone https://github.com/wolfSSL/wolfMQTT
 ```
 
 ### 2. Define path
@@ -33,7 +34,7 @@ $ mkdir build
 $ cd build
 $ cmake -DPICO_BOARD=pico_w -DWIFI_SSID="wifi-ssid" -DWIFI_PASSWORD="wifi-password" \
 -DTEST_TCP_SERVER_IP="ip-addr" ..
-$ make
+$ make 
 ```
 
 ### 4. Target files
@@ -43,8 +44,12 @@ $ make
 - wifi.uf2
 - tcp_Client.uf2
 - tls_Client.uf2
+- mqtt_Client.uf2
+- mqttSubscribe_picoLED.uf2
 
 Console output is to USB serial
+
+[tiny-json](https://github.com/rafagafe/tiny-json): This project uses an external JSON parser called tiny-json. tiny-json is distributed under the MIT License.
 
 ### References
 

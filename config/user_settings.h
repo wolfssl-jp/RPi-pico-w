@@ -35,6 +35,7 @@ extern "C"
 #include <stdio.h>
 #define TARGET_EMBEDDED
 
+#include <time.h>
 extern time_t myTime(time_t *);
 #define XTIME(t) myTime(t)
 
@@ -536,14 +537,21 @@ extern int my_rng_gen_block(unsigned char *output, unsigned int sz);
 #define NO_RC4
 #define NO_MD4
 #define NO_PWDBASED
+    #define NO_ASN_TIME
     // #define NO_CODING
-    // #define NO_ASN_TIME
     // #define NO_CERTS
     // #define NO_SIG_WRAPPER
 
 #ifdef __cplusplus
 }
 #endif
+
+// wolfMQTT 
+#define WOLFMQTT_USER_IO
+#define WOLFSSL_LWIP
+
+/* Uncomment to disable TLS */
+#define ENABLE_MQTT_TLS
 
 #endif /* WOLFSSL_USER_SETTINGS_H */
 
