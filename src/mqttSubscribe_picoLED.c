@@ -151,7 +151,7 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
 
 
 
-/* This function is a copy from wolfMQTT/exapmles/mqttclient/mqttclient.c */
+/* MQTT Subscribe */
 int mqttSubscribe_picoLED(MQTTCtx *mqttCtx)
 {
     int rc = MQTT_CODE_SUCCESS, i;
@@ -397,7 +397,7 @@ int set_mqtt_ctx(MQTTCtx* mqttCtx){
 
     XMEMSET(mqttCtx, 0, sizeof(MQTTCtx));
     mqttCtx->host = DEFAULT_MQTT_HOST;
-    mqttCtx->qos = DEFAULT_MQTT_QOS;
+    mqttCtx->qos = MQTT_QOS_2;
     mqttCtx->clean_session = 1;
     mqttCtx->keep_alive_sec = DEFAULT_KEEP_ALIVE_SEC;
     mqttCtx->client_id = DEFAULT_CLIENT_ID;

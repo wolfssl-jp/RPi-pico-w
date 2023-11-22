@@ -248,4 +248,42 @@ pico_enable_stdio_uart(mqttSubscribe_picoLED 0)
 
 pico_add_extra_outputs(mqttSubscribe_picoLED)
 
-### End of MQTT pico LED Client
+### End of MQTT Subscribe pico LED Client
+
+
+### MQTT Publish_picoLED
+add_executable(mqttPublish_picoLED
+src/mqttPublish_picoLED.c
+src/blink.c
+src/wifi.c
+src/tcp.c
+src/mqtt.c
+src/tiny-json.c
+)
+target_compile_definitions(mqttPublish_picoLED PRIVATE
+WIFI_SSID=\"${WIFI_SSID}\"
+WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
+PICO_CYW43_ARCH_POLL=1
+NO_SYS=1
+# ENABLE_MQTT_TLS=1
+
+)
+target_link_libraries(mqttPublish_picoLED
+pico_stdlib
+pico_rand
+pico_lwip
+pico_cyw43_arch
+pico_lwip_nosys
+pico_async_context_poll
+wolfssl
+wolfmqtt
+)
+
+
+pico_enable_stdio_usb(mqttPublish_picoLED 1)
+pico_enable_stdio_uart(mqttPublish_picoLED 0)
+
+pico_add_extra_outputs(mqttPublish_picoLED)
+
+### End of MQTT Publish pico LED Client

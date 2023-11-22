@@ -48,6 +48,8 @@
 
 #include "wolf/test_mosquitto_cert.h"
 
+#include "tiny-json.h"
+
 
 #define MAX_BUFFER_SIZE 1024
 #define TEST_MOSQUITTO_ORG_IP "91.121.93.94"
@@ -57,7 +59,11 @@
 #define MQTT_BROKER_PORT 1883
 #endif
 
+#define TIMEOUT_MS 50000
 
+#define IN_BUTTON_PIN 28
+#define LED_ON_MSG "{ \"led\" : \"on\" }"
+#define LED_OFF_MSG "{ \"led\" : \"off\" }"
 
 
 /* Locals */
@@ -69,6 +75,10 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
     byte buf[PRINT_BUFFER_SIZE+1];
     word32 len;
     MQTTCtx* mqttCtx = (MQTTCtx*)client->ctx;
+
+    enum { MAX_FIELDS = 4 }; // Max Number of Json fields is 1, is "led"
+    json_t pool[ MAX_FIELDS ];
+
 
     (void)mqttCtx;
 
@@ -106,10 +116,38 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
     PRINTF("Payload (%d - %d) printing %d bytes:" LINE_END "%s",
         msg->buffer_pos, msg->buffer_pos + msg->buffer_len, len, buf);
 
+
     if (msg_done) {
         PRINTF("MQTT Message: Done");
-    }
+        /* parse JSON string text to JSON obj and extract value of property "led" */
+        json_t const* parent = json_create( buf, pool, MAX_FIELDS );
+        if ( parent == NULL ) {
+            fprintf(stderr, "%s\n",
+            "The JSON string is bad formated or has more fields than the array");
+            return WOLF_FAIL;
+        };
 
+        
+        json_t const* led_field = json_getProperty( parent, "led" );
+        if ( led_field == NULL ) return WOLF_FAIL;
+        if ( json_getType( led_field ) != JSON_TEXT ) return WOLF_FAIL;
+        
+        char const* led_value = json_getValue( led_field );
+        printf( "%s%s%s", "LED: \"", led_value, "\"\n" );
+
+         if (strcmp(led_value, "on") == 0){
+            /* Enable LED */
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+
+         } 
+         else if (strcmp(led_value, "off") == 0){
+            /* Disable LED */
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+
+         }
+
+    }
+    
     /* Return negative to terminate publish processing */
     return MQTT_CODE_SUCCESS;
 }
@@ -117,8 +155,8 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
 
 
 
-/* This function is a copy from wolfMQTT/exapmles/mqttclient/mqttclient.c */
-int mqttClient_test(MQTTCtx *mqttCtx)
+/* mqtt Publish example */
+int mqttPublish_picoLED(MQTTCtx *mqttCtx)
 {
     int rc = MQTT_CODE_SUCCESS, i;
 
@@ -161,18 +199,13 @@ int mqttClient_test(MQTTCtx *mqttCtx)
         goto exit;
     }
 #endif
-#ifdef WOLFMQTT_PROPERTY_CB
-    rc = MqttClient_SetPropertyCallback(&mqttCtx->client,
-            mqtt_property_cb, NULL);
-    if (rc != MQTT_CODE_SUCCESS) {
-        goto exit;
-    }
-#endif
+
+
 
     /* Connect to broker */
     rc = MqttClient_NetConnect(&mqttCtx->client, mqttCtx->host,
            mqttCtx->port,
-        DEFAULT_CON_TIMEOUT_MS, mqttCtx->use_tls, mqtt_tls_cb);
+        TIMEOUT_MS, mqttCtx->use_tls, mqtt_tls_cb);
 
     PRINTF("MQTT Socket Connect: %s (%d)",
         MqttClient_ReturnCodeToString(rc), rc);
@@ -199,61 +232,12 @@ int mqttClient_test(MQTTCtx *mqttCtx)
         mqttCtx->lwt_msg.buffer = (byte*)mqttCtx->client_id;
         mqttCtx->lwt_msg.total_len = (word16)XSTRLEN(mqttCtx->client_id);
 
-#ifdef WOLFMQTT_V5
-        {
-            /* Add a 5 second delay to sending the LWT */
-            MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->lwt_msg.props);
-            prop->type = MQTT_PROP_WILL_DELAY_INTERVAL;
-            prop->data_int = 5;
-        }
-#endif
+
     }
     /* Optional authentication */
     mqttCtx->connect.username = mqttCtx->username;
     mqttCtx->connect.password = mqttCtx->password;
-#ifdef WOLFMQTT_V5
-    mqttCtx->client.packet_sz_max = mqttCtx->max_packet_size;
-    mqttCtx->client.enable_eauth = mqttCtx->enable_eauth;
 
-    if (mqttCtx->client.enable_eauth == 1) {
-        /* Enhanced authentication */
-        /* Add property: Authentication Method */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->connect.props);
-        prop->type = MQTT_PROP_AUTH_METHOD;
-        prop->data_str.str = (char*)DEFAULT_AUTH_METHOD;
-        prop->data_str.len = (word16)XSTRLEN(prop->data_str.str);
-    }
-    {
-        /* Request Response Information */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->connect.props);
-        prop->type = MQTT_PROP_REQ_RESP_INFO;
-        prop->data_byte = 1;
-    }
-    {
-        /* Request Problem Information */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->connect.props);
-        prop->type = MQTT_PROP_REQ_PROB_INFO;
-        prop->data_byte = 1;
-    }
-    {
-        /* Maximum Packet Size */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->connect.props);
-        prop->type = MQTT_PROP_MAX_PACKET_SZ;
-        prop->data_int = (word32)mqttCtx->max_packet_size;
-    }
-    {
-        /* Topic Alias Maximum */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->connect.props);
-        prop->type = MQTT_PROP_TOPIC_ALIAS_MAX;
-        prop->data_short = mqttCtx->topic_alias_max;
-    }
-    if (mqttCtx->clean_session == 0) {
-        /* Session expiry interval */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->connect.props);
-        prop->type = MQTT_PROP_SESSION_EXPIRY_INTERVAL;
-        prop->data_int = DEFAULT_SESS_EXP_INT; /* Session does not expire */
-    }
-#endif
 
     /* Send Connect and wait for Connect Ack */
     rc = MqttClient_Connect(&mqttCtx->client, &mqttCtx->connect);
@@ -265,16 +249,6 @@ int mqttClient_test(MQTTCtx *mqttCtx)
         goto disconn;
     }
 
-#ifdef WOLFMQTT_V5
-    if (mqttCtx->connect.props != NULL) {
-        /* Release the allocated properties */
-        MqttClient_PropsFree(mqttCtx->connect.props);
-    }
-    if (mqttCtx->lwt_msg.props != NULL) {
-        /* Release the allocated properties */
-        MqttClient_PropsFree(mqttCtx->lwt_msg.props);
-    }
-#endif
 
     /* Validate Connect Ack info */
     PRINTF("MQTT Connect Ack: Return Code %u, Session Present %d",
@@ -284,11 +258,6 @@ int mqttClient_test(MQTTCtx *mqttCtx)
             1 : 0
     );
 
-#ifdef WOLFMQTT_PROPERTY_CB
-        /* Print the acquired client ID */
-        PRINTF("MQTT Connect Ack: Assigned Client ID: %s",
-                mqttCtx->client_id);
-#endif
 
     /* Build list of topics */
     XMEMSET(&mqttCtx->subscribe, 0, sizeof(MqttSubscribe));
@@ -297,15 +266,7 @@ int mqttClient_test(MQTTCtx *mqttCtx)
     mqttCtx->topics[i].topic_filter = mqttCtx->topic_name;
     mqttCtx->topics[i].qos = mqttCtx->qos;
 
-#ifdef WOLFMQTT_V5
-    if (mqttCtx->subId_not_avail != 1) {
-        /* Subscription Identifier */
-        MqttProp* prop;
-        prop = MqttClient_PropsAdd(&mqttCtx->subscribe.props);
-        prop->type = MQTT_PROP_SUBSCRIPTION_ID;
-        prop->data_int = DEFAULT_SUB_ID;
-    }
-#endif
+
 
     /* Subscribe Topic */
     mqttCtx->subscribe.packet_id = mqtt_get_packetid();
@@ -315,12 +276,6 @@ int mqttClient_test(MQTTCtx *mqttCtx)
 
     rc = MqttClient_Subscribe(&mqttCtx->client, &mqttCtx->subscribe);
 
-#ifdef WOLFMQTT_V5
-    if (mqttCtx->subscribe.props != NULL) {
-        /* Release the allocated properties */
-        MqttClient_PropsFree(mqttCtx->subscribe.props);
-    }
-#endif
 
     PRINTF("MQTT Subscribe: %s (%d)",
         MqttClient_ReturnCodeToString(rc), rc);
@@ -336,7 +291,7 @@ int mqttClient_test(MQTTCtx *mqttCtx)
             topic->qos, topic->return_code);
     }
 
-    /* Publish Topic */
+    /* Set up for Publish Topic */
     XMEMSET(&mqttCtx->publish, 0, sizeof(MqttPublish));
     mqttCtx->publish.retain = 0;
     mqttCtx->publish.qos = mqttCtx->qos;
@@ -344,74 +299,52 @@ int mqttClient_test(MQTTCtx *mqttCtx)
     mqttCtx->publish.topic_name = mqttCtx->topic_name;
     mqttCtx->publish.packet_id = mqtt_get_packetid();
 
-    if (mqttCtx->pub_file) {
-        /* If a file is specified, then read into the allocated buffer */
-        rc = mqtt_file_load(mqttCtx->pub_file, &mqttCtx->publish.buffer,
-                (int*)&mqttCtx->publish.total_len);
-        if (rc != MQTT_CODE_SUCCESS) {
-            /* There was an error loading the file */
-            PRINTF("MQTT Publish file error: %d", rc);
+    /* Waiting for button input */
+
+    gpio_init(IN_BUTTON_PIN);
+    gpio_set_dir(IN_BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(IN_BUTTON_PIN);
+
+
+    bool led_value = false;
+    while (true) {
+        //  Read a value from pin 
+        bool btn_value = gpio_get(IN_BUTTON_PIN);
+
+        // Detect switch press
+        if (btn_value) {
+            led_value = !led_value;
+            switch (led_value) {
+                case false:
+                    /* Publish Topic */
+                    mqttCtx->publish.buffer = (byte*)LED_OFF_MSG;
+                    mqttCtx->publish.total_len = (word16)XSTRLEN(LED_OFF_MSG);
+                    rc = MqttClient_Publish(&mqttCtx->client, &mqttCtx->publish);
+                    PRINTF("MQTT Publish: Topic %s, %s %s (%d)",
+                        mqttCtx->publish.topic_name,
+                         mqttCtx->publish.buffer,
+                        MqttClient_ReturnCodeToString(rc), rc);
+                    break;
+                case true:
+                    /* Publish Topic */
+                    mqttCtx->publish.buffer = (byte*)LED_ON_MSG;
+                    mqttCtx->publish.total_len = (word16)XSTRLEN(LED_ON_MSG);
+                    rc = MqttClient_Publish(&mqttCtx->client, &mqttCtx->publish);
+                    PRINTF("MQTT Publish: Topic %s, %s %s (%d)",
+                        mqttCtx->publish.topic_name,
+                         mqttCtx->publish.buffer,
+                        MqttClient_ReturnCodeToString(rc), rc);
+                    break;
+            }
+
+            // Wait until switch is released
+            while (gpio_get(IN_BUTTON_PIN)) {
+                tight_loop_contents();
+            }
         }
+        sleep_ms(10);
     }
-    else {
-        mqttCtx->publish.buffer = (byte*)mqttCtx->message;
-        mqttCtx->publish.total_len = (word16)XSTRLEN(mqttCtx->message);
-    }
 
-    if (rc == MQTT_CODE_SUCCESS) {
-    #ifdef WOLFMQTT_V5
-        {
-            /* Payload Format Indicator */
-            MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->publish.props);
-            prop->type = MQTT_PROP_PAYLOAD_FORMAT_IND;
-            prop->data_byte = 1;
-        }
-        {
-            /* Content Type */
-            MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->publish.props);
-            prop->type = MQTT_PROP_CONTENT_TYPE;
-            prop->data_str.str = (char*)"wolf_type";
-            prop->data_str.len = (word16)XSTRLEN(prop->data_str.str);
-        }
-        if ((mqttCtx->topic_alias_max > 0) &&
-            (mqttCtx->topic_alias > 0) &&
-            (mqttCtx->topic_alias < mqttCtx->topic_alias_max)) {
-            /* Topic Alias */
-            MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->publish.props);
-            prop->type = MQTT_PROP_TOPIC_ALIAS;
-            prop->data_short = mqttCtx->topic_alias;
-        }
-    #endif
-
-        /* This loop allows payloads larger than the buffer to be sent by
-           repeatedly calling publish.
-        */
-        do {
-            rc = MqttClient_Publish(&mqttCtx->client, &mqttCtx->publish);
-        } while(rc == MQTT_CODE_PUB_CONTINUE);
-
-        if ((mqttCtx->pub_file) && (mqttCtx->publish.buffer)) {
-            WOLFMQTT_FREE(mqttCtx->publish.buffer);
-        }
-
-        PRINTF("MQTT Publish: Topic %s, %s (%d)",
-            mqttCtx->publish.topic_name,
-            MqttClient_ReturnCodeToString(rc), rc);
-    #ifdef WOLFMQTT_V5
-        if (mqttCtx->qos > 0) {
-            PRINTF("\tResponse Reason Code %d", mqttCtx->publish.resp.reason_code);
-        }
-    #endif
-        if (rc != MQTT_CODE_SUCCESS) {
-            goto disconn;
-        }
-    #ifdef WOLFMQTT_V5
-        if (mqttCtx->publish.props != NULL) {
-            /* Release the allocated properties */
-            MqttClient_PropsFree(mqttCtx->publish.props);
-        }
-    #endif
-    }
 
     /* Read Loop */
     PRINTF("MQTT Waiting for message...");
@@ -427,11 +360,7 @@ int mqttClient_test(MQTTCtx *mqttCtx)
         rc = MqttClient_WaitMessage(&mqttCtx->client,
                                             mqttCtx->cmd_timeout_ms);
 
-    #ifdef WOLFMQTT_NONBLOCK
-        /* Track elapsed time with no activity and trigger timeout */
-        rc = mqtt_check_timeout(rc, &mqttCtx->start_sec,
-            mqttCtx->cmd_timeout_ms/1000);
-    #endif
+
 
         if (mStopRead) {
             rc = MQTT_CODE_SUCCESS;
@@ -440,32 +369,6 @@ int mqttClient_test(MQTTCtx *mqttCtx)
         }
 
         /* check return code */
-    #ifdef WOLFMQTT_ENABLE_STDIN_CAP
-        else if (rc == MQTT_CODE_STDIN_WAKE) {
-            XMEMSET(mqttCtx->rx_buf, 0, MAX_BUFFER_SIZE);
-            if (XFGETS((char*)mqttCtx->rx_buf, MAX_BUFFER_SIZE - 1,
-                    stdin) != NULL)
-            {
-                rc = (int)XSTRLEN((char*)mqttCtx->rx_buf);
-
-                /* Publish Topic */
-                mqttCtx->stat = WMQ_PUB;
-                XMEMSET(&mqttCtx->publish, 0, sizeof(MqttPublish));
-                mqttCtx->publish.retain = 0;
-                mqttCtx->publish.qos = mqttCtx->qos;
-                mqttCtx->publish.duplicate = 0;
-                mqttCtx->publish.topic_name = mqttCtx->topic_name;
-                mqttCtx->publish.packet_id = mqtt_get_packetid();
-                mqttCtx->publish.buffer = mqttCtx->rx_buf;
-                mqttCtx->publish.total_len = (word16)rc;
-                rc = MqttClient_Publish(&mqttCtx->client,
-                       &mqttCtx->publish);
-                PRINTF("MQTT Publish: Topic %s, %s (%d)",
-                    mqttCtx->publish.topic_name,
-                    MqttClient_ReturnCodeToString(rc), rc);
-            }
-        }
-    #endif
         else if (rc == MQTT_CODE_ERROR_TIMEOUT) {
             /* Keep Alive */
             PRINTF("Keep-alive timeout, sending ping");
@@ -490,48 +393,13 @@ int mqttClient_test(MQTTCtx *mqttCtx)
         goto disconn;
     }
 
-    /* Unsubscribe Topics */
-    XMEMSET(&mqttCtx->unsubscribe, 0, sizeof(MqttUnsubscribe));
-    mqttCtx->unsubscribe.packet_id = mqtt_get_packetid();
-    mqttCtx->unsubscribe.topic_count =
-        sizeof(mqttCtx->topics) / sizeof(MqttTopic);
-    mqttCtx->unsubscribe.topics = mqttCtx->topics;
-
-    /* Unsubscribe Topics */
-    rc = MqttClient_Unsubscribe(&mqttCtx->client,
-           &mqttCtx->unsubscribe);
-
-    PRINTF("MQTT Unsubscribe: %s (%d)",
-        MqttClient_ReturnCodeToString(rc), rc);
-    if (rc != MQTT_CODE_SUCCESS) {
-        goto disconn;
-    }
-    mqttCtx->return_code = rc;
 
 disconn:
     /* Disconnect */
     XMEMSET(&mqttCtx->disconnect, 0, sizeof(mqttCtx->disconnect));
-#ifdef WOLFMQTT_V5
-    {
-        /* Session expiry interval */
-        MqttProp* prop = MqttClient_PropsAdd(&mqttCtx->disconnect.props);
-        prop->type = MQTT_PROP_SESSION_EXPIRY_INTERVAL;
-        prop->data_int = 0;
-    }
-    #if 0 /* enable to test sending a disconnect reason code */
-    if (mqttCtx->enable_lwt) {
-        /* Disconnect with Will Message */
-        mqttCtx->disconnect.reason_code = MQTT_REASON_DISCONNECT_W_WILL_MSG;
-    }
-    #endif
-#endif
+
     rc = MqttClient_Disconnect_ex(&mqttCtx->client, &mqttCtx->disconnect);
-#ifdef WOLFMQTT_V5
-    if (mqttCtx->disconnect.props != NULL) {
-        /* Release the allocated properties */
-        MqttClient_PropsFree(mqttCtx->disconnect.props);
-    }
-#endif
+
 
     PRINTF("MQTT Disconnect: %s (%d)",
         MqttClient_ReturnCodeToString(rc), rc);
@@ -562,17 +430,13 @@ int set_mqtt_ctx(MQTTCtx* mqttCtx){
 
     XMEMSET(mqttCtx, 0, sizeof(MQTTCtx));
     mqttCtx->host = DEFAULT_MQTT_HOST;
-    mqttCtx->qos = DEFAULT_MQTT_QOS;
+    mqttCtx->qos = MQTT_QOS_2;
     mqttCtx->clean_session = 1;
     mqttCtx->keep_alive_sec = DEFAULT_KEEP_ALIVE_SEC;
-    mqttCtx->client_id = DEFAULT_CLIENT_ID;
-    mqttCtx->topic_name = DEFAULT_TOPIC_NAME;
+    mqttCtx->client_id = "AnotherMQTTClient";
+    mqttCtx->topic_name = WOLFMQTT_TOPIC_NAME"pico_LED";
     mqttCtx->cmd_timeout_ms = DEFAULT_CMD_TIMEOUT_MS;
-#ifdef WOLFMQTT_V5
-    mqttCtx->max_packet_size = DEFAULT_MAX_PKT_SZ;
-    mqttCtx->topic_alias = 1;
-    mqttCtx->topic_alias_max = 1;
-#endif
+
 #ifdef ENABLE_MQTT_TLS
     mqttCtx->use_tls = 1;
 #else 
@@ -611,7 +475,7 @@ void main(void)
 
     rc = set_mqtt_ctx(&mqttCtx);
 
-    rc = mqttClient_test(&mqttCtx);
+    rc = mqttPublish_picoLED(&mqttCtx);
 
     mqtt_free_ctx(&mqttCtx);
 
@@ -620,5 +484,6 @@ void main(void)
 
     printf("Wifi disconnected\n");
 
-
 }
+
+
