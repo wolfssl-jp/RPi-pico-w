@@ -1,14 +1,13 @@
 cmake_minimum_required(VERSION 3.13)
 
-# Pull in Pico and FreeRTOS
+# Pull in Pico, Pico-examples and FreeRTOS
+# Pico Examples is only for referring ico_sdk_import.cmake and pico_extras_import_optional.cmake
+set(PICO_BOARD pico_w)
 include($ENV{PICO_EXAMPLES_PATH}/pico_sdk_import.cmake)
 include($ENV{PICO_EXAMPLES_PATH}/pico_extras_import_optional.cmake)
 
-#include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
-
-
-if(PICO_SDK_VERSION_STRING VERSION_LESS "1.3.0")
-    message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.3.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
+if(PICO_SDK_VERSION_STRING VERSION_LESS " 1.3.0 ")
+    message(FATAL_ERROR " Raspberry Pi Pico SDK version 1.3.0(or later) required. Your version is ${PICO_SDK_VERSION_STRING} ")
 endif()
 
 project(wolf_pico_examples C CXX ASM)
@@ -18,6 +17,14 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the SDK
 pico_sdk_init()
 
+
+# include($ENV{PICO_EXAMPLES_PATH}/pico_w/wifi/freertos/FreeRTOS_Kernel_import.cmake)
+# set(FREERTOS_KERNEL_PATH $ENV{FREERTOS_KERNEL_PATH})
+# set(FREERTOS_CONFIG_FILE_DIRECTORY config)
+# include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+include(FreeRTOS_Kernel_import.cmake)
+# include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/CMakeLists.txt)
+
 ### Global Include Path
     include_directories(config)
     include_directories(include)
@@ -25,9 +32,6 @@ pico_sdk_init()
     include_directories(${PICO_SDK_PATH}/lib/lwip/contrib/ports/freertos/include)
     include_directories(${PICO_SDK_PATH}/lib/lwip/src/include)
     include_directories(${PICO_SDK_PATH}/src/rp2_common/pico_async_context/include)
-
-    set(WOLFSSL_ROOT $ENV{WOLFSSL_ROOT})
-    include_directories(${WOLFSSL_ROOT})
 
 # ## End of Global Include Path
 
@@ -48,7 +52,7 @@ include(wolfssl_import.cmake)
     )
 
     pico_enable_stdio_usb(testwolfcrypt 1)
-    pico_enable_stdio_uart(testwolfcrypt 0)
+    pico_enable_stdio_uart(testwolfcrypt 1)
 
     pico_add_extra_outputs(testwolfcrypt)
 ### End of Test wolfCrypt algorithms
@@ -68,8 +72,12 @@ include(wolfssl_import.cmake)
         pico_rand
     )
 
+    target_compile_definitions(benchmark PRIVATE
+        WOLFSSL_RPI_PICO
+    )
+
     pico_enable_stdio_usb(benchmark 1)
-    pico_enable_stdio_uart(benchmark 0)
+    pico_enable_stdio_uart(benchmark 1)
 
     pico_add_extra_outputs(benchmark)
 ### End of Benchmark wolfCrypt algorithms
@@ -100,7 +108,7 @@ include(wolfssl_import.cmake)
 
 
     pico_enable_stdio_usb(Wifi 1)
-    pico_enable_stdio_uart(Wifi 0)
+    pico_enable_stdio_uart(Wifi 1)
 
     pico_add_extra_outputs(Wifi)
 ### End of Wifi connection
@@ -120,6 +128,7 @@ include(wolfssl_import.cmake)
         TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
         PICO_CYW43_ARCH_POLL
         NO_SYS=1
+        WOLF_SOCKET=1
     )
 
     target_link_libraries(tcp_Client
@@ -133,29 +142,30 @@ include(wolfssl_import.cmake)
 
 
     pico_enable_stdio_usb(tcp_Client 1)
-    pico_enable_stdio_uart(tcp_Client 0)
+    pico_enable_stdio_uart(tcp_Client 1)
 
     pico_add_extra_outputs(tcp_Client)
-### End of TCP Client
 
+# ## End of TCP Client
 
-### TLS Client
-    add_executable(tls_Client
-        src/blink.c
-        src/wifi.c
-        src/tcp.c
-        src/tlsClient_main.c
-    )
+# ## TLS Client: Bare metal
+add_executable(tls_Client_bm
+    src/blink.c
+    src/wifi.c
+    src/tcp.c
+    src/tlsClient_main.c
+)
 
-    target_compile_definitions(tls_Client PRIVATE
+    target_compile_definitions(tls_Client_bm PRIVATE
         WIFI_SSID=\"${WIFI_SSID}\"
         WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
         TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
         PICO_CYW43_ARCH_POLL
         NO_SYS=1
+        WOLF_SOCKET=1
     )
 
-    target_link_libraries(tls_Client
+    target_link_libraries(tls_Client_bm
         pico_stdlib
         pico_rand
         pico_lwip
@@ -165,8 +175,64 @@ include(wolfssl_import.cmake)
         wolfssl
     )
 
-    pico_enable_stdio_usb(tls_Client 1)
-    pico_enable_stdio_uart(tls_Client 0)
+    pico_enable_stdio_usb(tls_Client_bm 1)
+    pico_enable_stdio_uart(tls_Client_bm 1)
 
-    pico_add_extra_outputs(tls_Client)
+    pico_add_extra_outputs(tls_Client_bm)
+
+# ## End of TLS Client: Bare metal
+
+# ## FreeRTOS Port
+add_library(FREERTOS_PORT INTERFACE)
+target_include_directories(FREERTOS_PORT
+    INTERFACE
+    config
+)
+target_sources(FREERTOS_PORT INTERFACE
+    ./src/IdleMemory.c
+)
+# ## FreeRTOS Port
+
+# ## TLS Client: FreeRTOS
+add_executable(tls_Client_frtos
+    src/blink.c
+    src/wifi.c
+#    src/tcp.c
+    src/tlsClient_main.c
+    src/idleMemory.c
+)
+
+target_compile_definitions(tls_Client_frtos PRIVATE
+    WIFI_SSID=\"${WIFI_SSID}\"
+    WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+    TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
+    PICO_CYW43_ARCH_FREERTOS=1
+    NO_SYS=0
+    LWIP_SOCKET=1
+    LWIP_DEBUG
+)
+
+include_directories(
+    ${FREERTOS_KERNEL_PATH}/include
+    ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/include/
+)
+
+target_link_libraries(tls_Client_frtos
+    pico_stdlib
+    pico_rand
+
+    # pico_cyw43_arch
+    pico_lwip_freertos
+    FreeRTOS-Kernel-Heap4
+    FREERTOS_PORT
+    # pico_cyw43_arch_lwip_threadsafe_background
+    pico_cyw43_arch_lwip_sys_freertos
+    pico_lwip_api
+    wolfssl
+)
+
+pico_enable_stdio_usb(tls_Client_frtos 1)
+pico_enable_stdio_uart(tls_Client_frtos 1)
+
+pico_add_extra_outputs(tls_Client_frtos)
 ### End of TLS Client
