@@ -1,4 +1,4 @@
-/* wifi_main.c
+/* time.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -19,30 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#include <stdio.h>
-#include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
+#ifndef TIME_H
+#define TIME_H
 
-#include "wolf/common.h"
-#include "wolf/wifi.h"
-#include "wolf/blink.h"
+int time_init(void);
 
-void lwip_example_app_platform_assert(const char *msg, int line, const char *file)
-{
-    printf("Assertion \"%s\" failed at line %d in %s\n", msg, line, file);
-    fflush(NULL);
-    abort();
-}
-
-int main(int argc, char **argv)
-{
-    stdio_init_all();
-
-    blink(10, WOLF_BLINK_INIT);
-    wolf_wifiConnect(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
-
-    blink(10, 0);
-    wolf_wifiDisconnect();
-
-    return 0;
-}
+#endif

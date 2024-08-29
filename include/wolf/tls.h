@@ -1,4 +1,4 @@
-/* common.h
+/* tls.h
  *
  * Copyright (C) 2006-2023 wolfSSL Inc.
  *
@@ -19,10 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef TLS_H
+#define TLS_H
 
-#define WOLF_SUCCESS 0
-#define WOLF_FAIL    -1
+int my_IORecv(WOLFSSL *ssl, char *buff, int sz, void *ctx);
+int my_IOSend(WOLFSSL *ssl, char *buff, int sz, void *ctx);
 
 #endif
