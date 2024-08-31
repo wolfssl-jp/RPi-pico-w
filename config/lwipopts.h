@@ -11,6 +11,7 @@
 #define DEFAULT_THREAD_STACKSIZE 1024*10
 #define DEFAULT_RAW_RECVMBOX_SIZE 8
 #define TCPIP_MBOX_SIZE 8
+#define DEFAULT_ACCEPTMBOX_SIZE 8
 #define LWIP_TIMEVAL_PRIVATE 0
 
 // not necessary, can be done either way
